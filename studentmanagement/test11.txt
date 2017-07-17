@@ -1,0 +1,10 @@
+400	sunil	0	F	0	F
+800	gfh	0	F	0	F
+100	nimal	0	F	0	F
+500	sachith	0	F	0	F
+900	qqqq	0	F	0	F
+101	sdfs	0	F	0	F
+200	kamal	0	F	0	F
+600	ghghg	0	F	0	F
+300	ffff	0	F	0	F
+700	erte	0	F	0	F

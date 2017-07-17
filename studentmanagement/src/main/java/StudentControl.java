@@ -1,3 +1,4 @@
+import org.apache.log4j.Logger;
 import java.io.*;
 import java.nio.file.*;
 import java.sql.Timestamp;
@@ -8,6 +9,7 @@ import java.util.*;
  */
 public class StudentControl {
     HashMap<Integer, Student> studentdetails = new HashMap<Integer, Student>();
+    Logger logger = Logger.getLogger(StudentControl.class);
 
 
     public void studentDetails(Student student) {
@@ -29,7 +31,7 @@ public class StudentControl {
     }
 
     public void printStudentDetails() {
-        try (OutputStream os = new FileOutputStream("test.txt", true);) {
+        try (OutputStream os = new FileOutputStream("test.txt", true)) {
 
 
             for (Object objectname : studentdetails.keySet()) {
@@ -52,35 +54,23 @@ public class StudentControl {
             }
         } catch (Exception e) {
             System.out.println("File error...");
+            logger.error("File error...");
         }
     }
 
     public void printStudentDetailsBfWr() {
         Scanner in = new Scanner(System.in);
         String name;
-        int check1;
-        int check2;
         boolean reprint=false;
-        boolean isAppend = false;
+        boolean isAppend;
         System.out.println("Enter filename...");
+        logger.info("Enter filename...");
         name = in.next();
         String fname = name + ".txt";
         File file = new File(fname);
 
-        if (file.exists()) {
-            System.out.println("File exist with same name...");
-            System.out.println("Pres 1 to append Press 2 to overwrite Press 3 to do nothing.");
-            check1 = in.nextInt();
-            switch (check1) {
-                case 1:
-                    isAppend = true;
-                    break;
-                case 2:
-                    isAppend = false;
-                    break;
-            }
-        }
 
+        isAppend=fileExist(file);
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, isAppend))) {
             HashMap<Integer, Student> sdprint = studentdetails;
             if (isAppend) {
@@ -96,14 +86,15 @@ public class StudentControl {
     }
 
     public void writefromHashmap(Scanner in, boolean reprint, File file, BufferedWriter bw, HashMap<Integer, Student> sdprint) throws IOException {
-        int check2;
         for (int studentID : sdprint.keySet()) {
             reprint = isReprint(reprint, file, studentID);
             if (reprint) {
                 System.out.println("Already printed... Do you want to print again...");
+                logger.info("Already printed... Do you want to print again...");
                 System.out.println("If yes press 1 otherwise press 2...");
-                check2 = in.nextInt();
-                switch (check2) {
+                logger.info("If yes press 1 otherwise press 2...");
+
+                switch (in.nextInt()) {
                     case 1:
                         writetoFile(bw, sdprint, studentID);
                         break;
@@ -119,27 +110,47 @@ public class StudentControl {
     public void printStudentDetailsNIO() {
         Scanner in = new Scanner(System.in);
         String name;
-
-        boolean isAppend=false;
+        System.out.println("Enter filename...");
+        logger.info("Enter filename...");
+        name = in.next();
+        boolean isAppend;
         boolean reprint=false;
-        Path path = Paths.get("/home/tharindu/IdeaProjects/studentreport/NIOtest.txt");
+        Path path = Paths.get("/home/tharindu/IdeaProjects/studentmanagement/"+name+".txt");
+        isAppend=fileExist(path.toFile());
+
         try(BufferedWriter writer = Files.newBufferedWriter(path)) {
             HashMap<Integer, Student> sdprint = studentdetails;
             if (isAppend) {
                 addTimestamp(writer);
             }
-            for (int studentID : sdprint.keySet()) {
-                reprint = isReprint(reprint,path.toFile(), studentID);
-                writefromHashmap(in,reprint,path.toFile(),writer,sdprint);
-
-            }
+            writefromHashmap(in,reprint,path.toFile(),writer,sdprint);
             writer.flush();
 
-            writer.write("To be, or not to be. That is the question.");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public boolean fileExist(File file){
+        Scanner in = new Scanner(System.in);
+        if (file.exists()) {
+            System.out.println("File exist with same name...");
+            logger.info("File exist with same name...");
+            System.out.println("Pres 1 to append Press 2 to overwrite Press 3 to do nothing.");
+            logger.info("Pres 1 to append Press 2 to overwrite Press 3 to do nothing.");
+
+            switch (in.nextInt()) {
+                case 1:
+                    return true;
+
+                case 2:
+                    return false;
+
+            }
+        }
+        return true;
     }
 
     public void addTimestamp(BufferedWriter bw) throws IOException {
@@ -179,6 +190,7 @@ public class StudentControl {
 
         } catch (IOException e) {
             System.out.println("file error");
+            logger.info("File error...");
         }
 
     }
@@ -231,12 +243,12 @@ public class StudentControl {
             //Create a new watch service for the file system
             WatchService watchService = FileSystems.getDefault().newWatchService();
 
-            Path path = Paths.get("/home/tharindu/IdeaProjects/studentreport");
+            Path path = Paths.get("/home/tharindu/IdeaProjects/studentmanagement");
             //Register for events to be monitored
             WatchKey watchKey = path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
 
             System.out.println("Watch service registered dir: " + path.toString());
-
+            logger.info("Watch service registered dir: " + path.toString());
             //Wait for key to be signaled
             Scanner in =new Scanner(System.in);
             String status="";
@@ -246,20 +258,24 @@ public class StudentControl {
 
                 try {
                     System.out.println("Waiting for key to be signalled...");
+                    logger.info("Waiting for key to be signalled...");
                     key = watchService.take();
                 }
                 catch (InterruptedException ex) {
                     System.out.println("Interrupted Exception");
+                    logger.error("Interrupted Exception");
                     return;
                 }
                 //Process the pending events for the key
                 List<WatchEvent<?>> eventList = key.pollEvents();
                 System.out.println("Process the pending events for the key: " + eventList.size());
+                logger.info("Process the pending events for the key: " + eventList.size());
 
                 for (WatchEvent<?> genericEvent: eventList) {
                     //Retrieve the type of event
                     WatchEvent.Kind<?> eventKind = genericEvent.kind();
                     System.out.println("Event kind: " + eventKind);
+                    logger.info("Event kind: " + eventKind);
 
                   /*if (eventKind == ) {
 
@@ -269,28 +285,34 @@ public class StudentControl {
                     WatchEvent pathEvent =genericEvent;
                     Path file = (Path) pathEvent.context();
                     System.out.println("File name: " + file.toString());
+                    logger.info("File name: " + file.toString());
                     insertfromFile(file.toString());
 
                 }
                 //Reset the key
                 boolean validKey = key.reset();
                 System.out.println("Key reset");
+                logger.info("Key reset");
                 System.out.println("");
 
                 if (! validKey) {
                     System.out.println("Invalid key");
+                    logger.info("Invalid key");
                     break; // infinite for loop
                 }
                 System.out.println("Type return to go back to main menu..");
+                logger.info("Type return to go back to main menu..");
                 status=in.next();
             } // end infinite for loop
             //Close the service
             watchService.close();
             System.out.println("Watch service closed.");
+            logger.info("Watch service closed.");
 
 
         } catch (IOException e) {
             e.printStackTrace();
+            logger.error("IO exception.");
         }
     }
 
